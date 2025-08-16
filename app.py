@@ -27,17 +27,17 @@ def enviar_resposta(destinatario, texto ):
     except requests.exceptions.RequestException as e:
         print(f"Erro ao enviar resposta: {e}")
 
-def processa_e_responde(data):
+def processa_mensagem(dados_da_mensagem):
     """Função principal que processa a mensagem e envia a resposta."""
     try:
-        remetente = data['dados']['de']
-        mensagem_texto = data['dados']['corpo']
+        remetente = dados_da_mensagem['de']
+        mensagem_texto = dados_da_mensagem['corpo']
         msg_lower = mensagem_texto.lower()
 
         print(f"Processando mensagem: '{mensagem_texto}' de {remetente}")
 
         # Ignora mensagens do próprio bot para evitar loops
-        if data['dados'].get('fromMe') is True:
+        if dados_da_mensagem.get('fromMe') is True:
             print("Mensagem do próprio bot ignorada.")
             return
 
@@ -47,9 +47,10 @@ def processa_e_responde(data):
                             "👋 Olá! Seja bem-vindo(a) ao *NutriZap*.\n\n"
                             "💡 Fazemos *uma avaliação nutricional grátis* da sua refeição para você conhecer nosso serviço.\n"
                             "📸 Envie agora a foto do seu prato para começarmos!")
+            return
 
         # Simulação de recebimento de foto
-        elif 'foto' in msg_lower or 'prato' in msg_lower or 'refeição' in msg_lower:
+        if 'foto' in msg_lower or 'prato' in msg_lower or 'refeição' in msg_lower:
             enviar_resposta(remetente, "🔍 Analisando sua refeição... 🍽️")
             enviar_resposta(remetente,
                             "✅ Avaliação concluída!\n\n"
@@ -58,34 +59,38 @@ def processa_e_responde(data):
             enviar_resposta(remetente,
                             "🔥 Garanta agora seu acesso Premium e continue recebendo análises instantâneas!\n"
                             f"💳 Clique aqui para assinar: {CHECKOUT_LINK}")
+            return
 
         # Resposta para quem pergunta sobre o plano
-        elif 'assinar' in msg_lower or 'premium' in msg_lower:
+        if 'assinar' in msg_lower or 'premium' in msg_lower:
             enviar_resposta(remetente,
                             f"💳 Aqui está seu link para assinar e liberar acesso imediato:\n{CHECKOUT_LINK}")
+            return
 
         # Resposta padrão
-        else:
-            enviar_resposta(remetente,
-                            "🤖 Desculpe, não entendi.\n"
-                            "Envie *oi* para começar ou envie a foto do seu prato. 📸")
+        enviar_resposta(remetente,
+                        "🤖 Desculpe, não entendi.\n"
+                        "Envie *oi* para começar ou envie a foto do seu prato. 📸")
 
     except (KeyError, TypeError) as e:
-        print(f"Erro ao processar os dados: {e}")
+        print(f"Erro ao processar os dados da mensagem: {e}")
 
 
 @app.route('/webhook', methods=['POST'])
 def webhook():
     """Recebe os webhooks da UltraMsg."""
-    data = request.get_json()
+    webhook_data = request.get_json()
     print("================ DADOS RECEBIDOS ===============")
-    print(data)
+    print(webhook_data)
     print("==================================================")
 
-    # A verificação de dados agora é feita dentro da função principal
-    processa_e_responde(data)
+    # Verifica se a chave 'data' (em inglês) existe
+    if webhook_data and 'data' in webhook_data:
+        processa_mensagem(webhook_data['data'])
+    else:
+        print("Webhook recebido com formato inválido ou sem a chave 'data'.")
     
-    return "OK", 200 # Sempre retorna 200 para a UltraMsg não ficar reenviando
+    return "OK", 200
 
 @app.route('/', methods=['GET'])
 def index():
