@@ -31,27 +31,19 @@ def processa_mensagem(dados_da_mensagem):
     """Função principal que processa a mensagem e envia a resposta."""
     try:
         remetente = dados_da_mensagem['de']
-        mensagem_texto = dados_da_mensagem['corpo']
-        msg_lower = mensagem_texto.lower()
+        tipo_mensagem = dados_da_mensagem['type'] # 'chat' ou 'image'
 
-        print(f"Processando mensagem: '{mensagem_texto}' de {remetente}")
+        print(f"Processando mensagem do tipo '{tipo_mensagem}' de {remetente}")
 
         # Ignora mensagens do próprio bot para evitar loops
         if dados_da_mensagem.get('fromMe') is True:
             print("Mensagem do próprio bot ignorada.")
             return
 
-        # Fluxo de Boas-vindas
-        if 'oi' in msg_lower or 'olá' in msg_lower:
-            enviar_resposta(remetente,
-                            "👋 Olá! Seja bem-vindo(a) ao *NutriZap*.\n\n"
-                            "💡 Fazemos *uma avaliação nutricional grátis* da sua refeição para você conhecer nosso serviço.\n"
-                            "📸 Envie agora a foto do seu prato para começarmos!")
-            return
-
-        # Simulação de recebimento de foto
-        if 'foto' in msg_lower or 'prato' in msg_lower or 'refeição' in msg_lower:
-            enviar_resposta(remetente, "🔍 Analisando sua refeição... 🍽️")
+        # --- LÓGICA PARA IMAGENS ---
+        if tipo_mensagem == 'image':
+            enviar_resposta(remetente, "📸 Foto recebida! 🔍 Analisando sua refeição... 🍽️")
+            # Simulação de análise
             enviar_resposta(remetente,
                             "✅ Avaliação concluída!\n\n"
                             "🍅 Sua refeição está equilibrada, mas poderia ter mais vegetais e menos carboidratos simples.\n"
@@ -59,18 +51,30 @@ def processa_mensagem(dados_da_mensagem):
             enviar_resposta(remetente,
                             "🔥 Garanta agora seu acesso Premium e continue recebendo análises instantâneas!\n"
                             f"💳 Clique aqui para assinar: {CHECKOUT_LINK}")
-            return
+            return # Termina o processamento aqui
 
-        # Resposta para quem pergunta sobre o plano
-        if 'assinar' in msg_lower or 'premium' in msg_lower:
+        # --- LÓGICA PARA TEXTO ---
+        if tipo_mensagem == 'chat':
+            mensagem_texto = dados_da_mensagem['corpo']
+            msg_lower = mensagem_texto.lower()
+
+            if 'oi' in msg_lower or 'olá' in msg_lower:
+                enviar_resposta(remetente,
+                                "👋 Olá! Seja bem-vindo(a) ao *NutriZap*.\n\n"
+                                "💡 Fazemos *uma avaliação nutricional grátis* da sua refeição para você conhecer nosso serviço.\n"
+                                "📸 Envie agora a foto do seu prato para começarmos!")
+                return
+
+            if 'assinar' in msg_lower or 'premium' in msg_lower:
+                enviar_resposta(remetente,
+                                f"💳 Aqui está seu link para assinar e liberar acesso imediato:\n{CHECKOUT_LINK}")
+                return
+
+            # Resposta padrão para textos não reconhecidos
             enviar_resposta(remetente,
-                            f"💳 Aqui está seu link para assinar e liberar acesso imediato:\n{CHECKOUT_LINK}")
+                            "🤖 Desculpe, não entendi.\n"
+                            "Envie *oi* para começar ou envie a foto do seu prato. 📸")
             return
-
-        # Resposta padrão
-        enviar_resposta(remetente,
-                        "🤖 Desculpe, não entendi.\n"
-                        "Envie *oi* para começar ou envie a foto do seu prato. 📸")
 
     except (KeyError, TypeError) as e:
         print(f"Erro ao processar os dados da mensagem: {e}")
@@ -84,7 +88,6 @@ def webhook():
     print(webhook_data)
     print("==================================================")
 
-    # Verifica se a chave 'data' (em inglês) existe
     if webhook_data and 'data' in webhook_data:
         processa_mensagem(webhook_data['data'])
     else:
