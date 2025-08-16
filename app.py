@@ -81,16 +81,16 @@ app = Flask(__name__)
 @app.route('/webhook', methods=['POST'])
 def webhook():
     data = request.get_json()
-    # A estrutura do JSON pode variar, consulte a documentação da UltraMsg
-    # Exemplo: {"event": "message", "data": {"from": "55...", "body": "..."}}
-    if data and data.get('event') == 'message':
-        message_data = data.get('data')
-        chat_id = message_data.get('from')
-        message_body = message_data.get('body')
-        if chat_id and message_body:
-            handle_message(message_body, chat_id)
-            return "OK", 200
-    return "Invalid data", 400
+    print("================ DADOS RECEBIDOS ===============")
+    print(data)  # Esta linha vai imprimir os dados no log do Render
+    print("==================================================")
+    
+    if data:
+        resposta = processar_mensagem(data)
+        enviar_resposta(resposta)
+        return "OK", 200
+    else:
+        return "Nenhum dado recebido", 400
 
 # Para rodar localmente para testes (não no PythonAnywhere diretamente)
 if __name__ == '__main__':
