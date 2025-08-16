@@ -1,4 +1,5 @@
 import requests
+import json  # <--- IMPORTANTE: Adicionamos a biblioteca JSON
 from flask import Flask, request
 
 app = Flask(__name__)
@@ -30,17 +31,18 @@ def enviar_resposta(destinatario, texto ):
 def processa_mensagem(dados_da_mensagem):
     """Função principal que processa a mensagem e envia a resposta."""
     try:
-        # CORREÇÃO FINAL: Usando as chaves em português do JSON que está dentro de 'data'
+        # GARANTIA DE TIPO: Se for uma string, converte para dicionário
+        if isinstance(dados_da_mensagem, str):
+            dados_da_mensagem = json.loads(dados_da_mensagem)
+
         remetente = dados_da_mensagem['de']
         tipo_mensagem = dados_da_mensagem['tipo']
 
         print(f"Processando mensagem do tipo '{tipo_mensagem}' de {remetente}")
 
         if dados_da_mensagem.get('fromMe') is True:
-            print("Mensagem do próprio bot ignorada.")
             return
 
-        # --- LÓGICA PARA IMAGENS ---
         if tipo_mensagem == 'imagem':
             enviar_resposta(remetente, "📸 Foto recebida! 🔍 Analisando sua refeição... 🍽️")
             enviar_resposta(remetente,
@@ -52,7 +54,6 @@ def processa_mensagem(dados_da_mensagem):
                             f"💳 Clique aqui para assinar: {CHECKOUT_LINK}")
             return
 
-        # --- LÓGICA PARA TEXTO ---
         if tipo_mensagem == 'chat':
             mensagem_texto = dados_da_mensagem['corpo']
             msg_lower = mensagem_texto.lower()
@@ -74,10 +75,8 @@ def processa_mensagem(dados_da_mensagem):
                             "Envie *oi* para começar ou envie a foto do seu prato. 📸")
             return
 
-    except KeyError as e:
-        print(f"Erro de chave: A chave {e} não foi encontrada no JSON.")
-    except Exception as e:
-        print(f"Ocorreu um erro inesperado: {e}")
+    except (KeyError, TypeError, json.JSONDecodeError) as e:
+        print(f"Erro ao processar os dados da mensagem: {e}")
 
 
 @app.route('/webhook', methods=['POST'])
@@ -88,7 +87,6 @@ def webhook():
     print(webhook_data)
     print("==================================================")
 
-    # CORREÇÃO FINAL: Acessa a chave 'data' (em inglês) e passa o conteúdo para a função
     if webhook_data and 'data' in webhook_data:
         processa_mensagem(webhook_data['data'])
     else:
