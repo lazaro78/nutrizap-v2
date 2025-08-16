@@ -30,8 +30,9 @@ def enviar_resposta(destinatario, texto ):
 def processa_mensagem(dados_da_mensagem):
     """Função principal que processa a mensagem e envia a resposta."""
     try:
+        # CORREÇÃO: Usando as chaves em português do JSON real
         remetente = dados_da_mensagem['de']
-        tipo_mensagem = dados_da_mensagem['type'] # 'chat' ou 'image'
+        tipo_mensagem = dados_da_mensagem['tipo']
 
         print(f"Processando mensagem do tipo '{tipo_mensagem}' de {remetente}")
 
@@ -41,9 +42,9 @@ def processa_mensagem(dados_da_mensagem):
             return
 
         # --- LÓGICA PARA IMAGENS ---
-        if tipo_mensagem == 'image':
+        # CORREÇÃO: 'imagem' em vez de 'image'
+        if tipo_mensagem == 'imagem':
             enviar_resposta(remetente, "📸 Foto recebida! 🔍 Analisando sua refeição... 🍽️")
-            # Simulação de análise
             enviar_resposta(remetente,
                             "✅ Avaliação concluída!\n\n"
                             "🍅 Sua refeição está equilibrada, mas poderia ter mais vegetais e menos carboidratos simples.\n"
@@ -51,10 +52,12 @@ def processa_mensagem(dados_da_mensagem):
             enviar_resposta(remetente,
                             "🔥 Garanta agora seu acesso Premium e continue recebendo análises instantâneas!\n"
                             f"💳 Clique aqui para assinar: {CHECKOUT_LINK}")
-            return # Termina o processamento aqui
+            return
 
         # --- LÓGICA PARA TEXTO ---
+        # CORREÇÃO: 'chat' em vez de 'chat' (já estava certo, mas mantendo consistência)
         if tipo_mensagem == 'chat':
+            # CORREÇÃO: Usando a chave 'corpo'
             mensagem_texto = dados_da_mensagem['corpo']
             msg_lower = mensagem_texto.lower()
 
@@ -77,7 +80,7 @@ def processa_mensagem(dados_da_mensagem):
             return
 
     except (KeyError, TypeError) as e:
-        print(f"Erro ao processar os dados da mensagem: {e}")
+        print(f"Erro ao processar os dados da mensagem. Chave não encontrada: {e}")
 
 
 @app.route('/webhook', methods=['POST'])
